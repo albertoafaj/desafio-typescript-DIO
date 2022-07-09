@@ -18,16 +18,19 @@ var  password: string ;
 let sessionId: string;
 let listId = '7101979';
 let listaDeFilmes: object;
+let temporaryList: HTMLDListElement;
 
 let loginButton = document.getElementById('login-button')as HTMLButtonElement;
 let searchButton = document.getElementById('search-button') as HTMLButtonElement;
 let searchContainer = document.getElementById('search-container') as HTMLDivElement;
+let saveListBtn = document.getElementById('new-btn-list') as HTMLButtonElement;
+let myList = document.getElementById('my-list') as HTMLDivElement;
 
-  loginButton.addEventListener('click', async () => {
-    await criarRequestToken();
-    await logar();
-    await criarSessao();
-  })
+loginButton.addEventListener('click', async () => {
+  await criarRequestToken();
+  await logar();
+  await criarSessao();
+})
 
 searchButton.addEventListener('click', async () => {
   let lista = document.getElementById("lista");
@@ -48,9 +51,20 @@ searchButton.addEventListener('click', async () => {
   }
   console.log(listaDeFilmes);
   searchContainer.insertBefore(ul,searchContainer.children[2]);
+  temporaryList = ul;
+  
 })
 
+// Adicionar o evento de click no botão de salvar a lista
 
+saveListBtn.addEventListener('click', () => {
+  let newList = document.getElementById('new-list') as HTMLInputElement;
+  let listTitle = document.getElementById('list-title') as HTMLTitleElement;
+  let cloneNode = temporaryList.cloneNode(true);
+  listTitle.innerHTML = newList.value;
+  myList.appendChild(cloneNode);
+  //console.log();
+});
 
 function preencherSenha(): void{
   let inputPassword = document.getElementById('senha') as HTMLInputElement;

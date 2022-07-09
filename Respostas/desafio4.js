@@ -25,9 +25,12 @@ var password;
 let sessionId;
 let listId = '7101979';
 let listaDeFilmes;
+let temporaryList;
 let loginButton = document.getElementById('login-button');
 let searchButton = document.getElementById('search-button');
 let searchContainer = document.getElementById('search-container');
+let saveListBtn = document.getElementById('new-btn-list');
+let myList = document.getElementById('my-list');
 loginButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
     yield criarRequestToken();
     yield logar();
@@ -51,7 +54,17 @@ searchButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, f
     }
     console.log(listaDeFilmes);
     searchContainer.insertBefore(ul, searchContainer.children[2]);
+    temporaryList = ul;
 }));
+// Adicionar o evento de click no botão de salvar a lista
+saveListBtn.addEventListener('click', () => {
+    let newList = document.getElementById('new-list');
+    let listTitle = document.getElementById('list-title');
+    let cloneNode = temporaryList.cloneNode(true);
+    listTitle.innerHTML = newList.value;
+    myList.appendChild(cloneNode);
+    //console.log();
+});
 function preencherSenha() {
     let inputPassword = document.getElementById('senha');
     password = inputPassword.value;
