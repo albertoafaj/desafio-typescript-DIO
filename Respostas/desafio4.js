@@ -23,7 +23,7 @@ var requestToken;
 var username;
 var password;
 let sessionId;
-let listId = '7101979';
+let listId;
 let listaDeFilmes;
 let temporaryList;
 let loginButton = document.getElementById('login-button');
@@ -38,32 +38,33 @@ loginButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, fu
 }));
 searchButton.addEventListener('click', () => __awaiter(void 0, void 0, void 0, function* () {
     let lista = document.getElementById("lista");
+    let search = document.getElementById('search');
+    let query = search.value;
+    let ul = document.createElement('ul');
     if (lista) {
         lista.outerHTML = "";
     }
-    let query = document.getElementById('search');
-    query = query.value;
-    console.log("minha query = " + query);
     listaDeFilmes = yield procurarFilme(query);
-    let ul = document.createElement('ul');
     ul.id = "lista";
     for (const item of listaDeFilmes.results) {
         let li = document.createElement('li');
         li.appendChild(document.createTextNode(item.original_title));
         ul.appendChild(li);
     }
-    console.log(listaDeFilmes);
     searchContainer.insertBefore(ul, searchContainer.children[2]);
     temporaryList = ul;
 }));
 // Adicionar o evento de click no botão de salvar a lista
 saveListBtn.addEventListener('click', () => {
     let newList = document.getElementById('new-list');
+    let newListDesc = document.getElementById('new-list-desc');
     let listTitle = document.getElementById('list-title');
+    let listDesc = document.getElementById('list-desc');
     let cloneNode = temporaryList.cloneNode(true);
-    listTitle.innerHTML = newList.value;
+    let title = listTitle.innerHTML = newList.value;
+    let description = listDesc.innerHTML = newListDesc.value;
     myList.appendChild(cloneNode);
-    //console.log();
+    criarLista(title, description);
 });
 function preencherSenha() {
     let inputPassword = document.getElementById('senha');
@@ -81,7 +82,6 @@ function preencherApi() {
     validateLoginButton();
 }
 function validateLoginButton() {
-    console.log(password, username, apiKey);
     if (password && username && apiKey) {
         loginButton.disabled = false;
     }
@@ -89,14 +89,13 @@ function validateLoginButton() {
         loginButton.disabled = true;
     }
 }
+;
 class HttpClient {
-    static get({ url, method, body = null }) {
+    static get({ url, method, body }) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('1. o body é ' + body);
             return new Promise((resolve, reject) => {
                 let request = new XMLHttpRequest();
                 request.open(method, url, true);
-                console.log('2. o body é ' + body);
                 request.onload = () => {
                     if (request.status >= 200 && request.status < 300) {
                         resolve(JSON.parse(request.responseText));
@@ -115,11 +114,9 @@ class HttpClient {
                     });
                 };
                 if (body) {
-                    console.log('3. o body é ' + body);
                     request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                     body = JSON.stringify(body);
                 }
-                console.log('4. o body é ' + body);
                 request.send(body);
             });
         });
@@ -128,10 +125,9 @@ class HttpClient {
 function procurarFilme(query) {
     return __awaiter(this, void 0, void 0, function* () {
         query = encodeURI(query);
-        console.log(query);
         let result = yield HttpClient.get({
             url: `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}`,
-            method: "GET"
+            method: "GET",
         });
         return result;
     });
@@ -142,7 +138,6 @@ function adicionarFilme(filmeId) {
             url: `https://api.themoviedb.org/3/movie/${filmeId}?api_key=${apiKey}&language=en-US`,
             method: "GET"
         });
-        console.log(result);
     });
 }
 function criarRequestToken() {
@@ -152,13 +147,10 @@ function criarRequestToken() {
             method: "GET"
         });
         requestToken = result.request_token;
-        console.log("criou request_toke");
     });
 }
 function logar() {
     return __awaiter(this, void 0, void 0, function* () {
-        console.log(username, password, requestToken);
-        console.log("logou");
         let result = yield HttpClient.get({
             url: `https://api.themoviedb.org/3/authentication/token/validate_with_login?api_key=${apiKey}`,
             method: "POST",
@@ -177,7 +169,6 @@ function criarSessao() {
             method: "GET"
         });
         sessionId = result.session_id;
-        console.log("chegou aqui:", result, sessionId);
     });
 }
 function criarLista(nomeDaLista, descricao) {
@@ -191,7 +182,7 @@ function criarLista(nomeDaLista, descricao) {
                 language: "pt-br"
             }
         });
-        console.log(result);
+        listId = result.id;
     });
 }
 function adicionarFilmeNaLista(filmeId, listaId) {
@@ -203,7 +194,6 @@ function adicionarFilmeNaLista(filmeId, listaId) {
                 media_id: filmeId
             }
         });
-        console.log(result);
     });
 }
 function pegarLista() {
@@ -212,7 +202,6 @@ function pegarLista() {
             url: `https://api.themoviedb.org/3/list/${listId}?api_key=${apiKey}`,
             method: "GET"
         });
-        console.log(result);
     });
 }
 { /* <div style="display: flex;">

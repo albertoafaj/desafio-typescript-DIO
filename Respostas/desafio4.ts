@@ -16,8 +16,8 @@ var requestToken: string ;
 var  username: string ;
 var  password: string ;
 let sessionId: string;
-let listId = '7101979';
-let listaDeFilmes: object;
+let listId: string ;
+let listaDeFilmes: unknown;
 let temporaryList: HTMLDListElement;
 
 let loginButton = document.getElementById('login-button')as HTMLButtonElement;
@@ -25,6 +25,7 @@ let searchButton = document.getElementById('search-button') as HTMLButtonElement
 let searchContainer = document.getElementById('search-container') as HTMLDivElement;
 let saveListBtn = document.getElementById('new-btn-list') as HTMLButtonElement;
 let myList = document.getElementById('my-list') as HTMLDivElement;
+
 
 loginButton.addEventListener('click', async () => {
   await criarRequestToken();
@@ -34,22 +35,19 @@ loginButton.addEventListener('click', async () => {
 
 searchButton.addEventListener('click', async () => {
   let lista = document.getElementById("lista");
+  let search = document.getElementById('search') as HTMLInputElement;
+  let query: string = search.value;
+  let ul = document.createElement('ul');
   if (lista) {
     lista.outerHTML = "";
   }
-  let query = document.getElementById('search');
-  query = query.value;
-  console.log("minha query = " + query);
-  
   listaDeFilmes = await procurarFilme(query);
-  let ul = document.createElement('ul');
   ul.id = "lista"
   for (const item of listaDeFilmes.results) {
-    let li = document.createElement('li');
-    li.appendChild(document.createTextNode(item.original_title))
-    ul.appendChild(li)
+      let li = document.createElement('li');
+      li.appendChild(document.createTextNode(item.original_title))
+      ul.appendChild(li)
   }
-  console.log(listaDeFilmes);
   searchContainer.insertBefore(ul,searchContainer.children[2]);
   temporaryList = ul;
   
@@ -59,11 +57,14 @@ searchButton.addEventListener('click', async () => {
 
 saveListBtn.addEventListener('click', () => {
   let newList = document.getElementById('new-list') as HTMLInputElement;
+  let newListDesc = document.getElementById('new-list-desc') as HTMLInputElement;
   let listTitle = document.getElementById('list-title') as HTMLTitleElement;
+  let listDesc = document.getElementById('list-desc') as HTMLTitleElement;
   let cloneNode = temporaryList.cloneNode(true);
-  listTitle.innerHTML = newList.value;
+  let title = listTitle.innerHTML = newList.value;
+  let description = listDesc.innerHTML = newListDesc.value;
   myList.appendChild(cloneNode);
-  //console.log();
+  criarLista(title, description);
 });
 
 function preencherSenha(): void{
@@ -85,8 +86,6 @@ function preencherApi() {
 }
 
 function validateLoginButton(): void {
-    console.log(password , username , apiKey);
-    
   if (password && username && apiKey) {
     loginButton.disabled = false;
   } else {
@@ -94,15 +93,13 @@ function validateLoginButton(): void {
   }
 }
 
+interface IRequest { url: string, method: string; body?: string | object};
+
 class HttpClient {
-  static async get({url, method, body = null}) {
-    console.log('1. o body é ' + body);
+  static async get({url, method, body}: IRequest) {
     return new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
       request.open(method, url, true);
-      console.log('2. o body é ' + body);
-      
-
       request.onload = () => {
         if (request.status >= 200 && request.status < 300) {
           resolve(JSON.parse(request.responseText));
@@ -119,24 +116,20 @@ class HttpClient {
           statusText: request.statusText
         })
       }
-
       if (body) {
-        console.log('3. o body é ' + body);
         request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
         body = JSON.stringify(body);
       }
-      console.log('4. o body é ' + body);
       request.send(body);
     })
   }
 }
 
-async function procurarFilme(query) {
+async function procurarFilme(query: string){
   query = encodeURI(query)
-  console.log(query)
   let result = await HttpClient.get({
     url: `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${query}`,
-    method: "GET"
+    method: "GET",
   })
   return result
 }
@@ -146,7 +139,6 @@ async function adicionarFilme(filmeId) {
     url: `https://api.themoviedb.org/3/movie/${filmeId}?api_key=${apiKey}&language=en-US`,
     method: "GET"
   })
-  console.log(result);
 }
 
 async function criarRequestToken () {
@@ -154,29 +146,20 @@ async function criarRequestToken () {
     url: `https://api.themoviedb.org/3/authentication/token/new?api_key=${apiKey}`,
     method: "GET"
   });
-        
     requestToken = result.request_token;
-
-    console.log("criou request_toke");
-    
 }
-
 
 async function logar() {
     
-    console.log(username, password, requestToken);
-    console.log("logou");
     let result = await HttpClient.get({
     url: `https://api.themoviedb.org/3/authentication/token/validate_with_login?api_key=${apiKey}`,
     method: "POST",
-    
     body: {
       username: `${username}`,
       password: `${password}`,
       request_token: `${requestToken}`
     }
 });
-
 }
 
 async function criarSessao() {
@@ -185,11 +168,9 @@ async function criarSessao() {
     method: "GET"
   })
   sessionId = result.session_id;
-  console.log("chegou aqui:", result, sessionId);
-  
 }
 
-async function criarLista(nomeDaLista, descricao) {
+async function criarLista(nomeDaLista: string, descricao: string){
     let result = await HttpClient.get({
         url: `https://api.themoviedb.org/3/list?api_key=${apiKey}&session_id=${sessionId}`,
     method: "POST",
@@ -199,7 +180,7 @@ async function criarLista(nomeDaLista, descricao) {
       language: "pt-br"
     }
   })
-  console.log(result);
+  listId = result.id
 }
 
 async function adicionarFilmeNaLista(filmeId, listaId) {
@@ -210,7 +191,6 @@ async function adicionarFilmeNaLista(filmeId, listaId) {
       media_id: filmeId
     }
   })
-  console.log(result);
 }
 
 async function pegarLista() {
@@ -218,7 +198,6 @@ async function pegarLista() {
     url: `https://api.themoviedb.org/3/list/${listId}?api_key=${apiKey}`,
     method: "GET"
   })
-  console.log(result);
 }
 
 
